@@ -442,3 +442,43 @@ body {
         align-items: stretch;
     }
 }
+
+/* Timer */
+.lap-time {
+    padding: 8px;
+    margin: 5px 0;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+
+/* Media Queries pour le responsive */
+@media (max-width: 600px) {
+    .timer-container {
+        width: 90%;
+    }
+    
+    button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}
+
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-container svg {
+    flex-shrink: 0;
+}
+
+/* Mode sombre */
+@media (prefers-color-scheme: dark) {
+    .logo-container svg circle:first-child {
+        fill: #5C6BC0; /* Bleu plus clair en mode sombre */
+    }
+}

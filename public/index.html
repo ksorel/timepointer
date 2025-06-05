@@ -3,54 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K-OIL - Pointage</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="TimePointer - Solution complète de pointage professionnel">
+    
+    <!-- PWA Configuration -->
+    <meta name="theme-color" content="#3F51B5"> <!-- Changé pour correspondre au logo -->
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="/icons/icon-192x192.png">
-    <meta name="theme-color" content="#2c3e50">
+    
+    <!-- Favicon & PWA Icons -->
+    <link rel="icon" href="/assets/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/assets/icons/icon.svg" type="image/svg+xml"> <!-- SVG moderne -->
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
+    <link rel="mask-icon" href="/assets/icons/icon.svg" color="#3F51B5"> <!-- Pour Safari -->
+
+    <title>TimePointer | Dashboard</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Préchargement API -->
+    <link rel="preconnect" href="/api" crossorigin>
 </head>
 <body>
-    <!-- Page de connexion -->
-    <div id="login-page" class="page active">
-        <div class="login-container">
-            <div class="logo">
-                <img src="/images/k-oil-logo.png" alt="Logo K-OIL">
-                <h1>Pointage Employés</h1>
+    <header class="app-header">
+        <div class="header-content">
+            <!-- Logo SVG intégré directement -->
+            <div class="logo-container">
+                <svg width="40" height="40" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="96" cy="96" r="88" fill="#3F51B5"/>
+                    <circle cx="96" cy="96" r="80" fill="white"/>
+                    <path d="M96 40V56M96 136V152M56 96H72M120 96H136" stroke="#3F51B5" stroke-width="4"/>
+                    <path d="M96 96L96 56" stroke="#3F51B5" stroke-width="8" stroke-linecap="round"/>
+                    <path d="M96 96L132 96" stroke="#3F51B5" stroke-width="4" stroke-linecap="round"/>
+                    <circle cx="96" cy="96" r="8" fill="#3F51B5"/>
+                </svg>
+                <h1>K-OIL Time Pointer</h1>
+            </div>
+    
+            <div class="header-actions">
+                <div class="theme-switch-wrapper">
+                    <label class="theme-switch" for="theme-checkbox">
+                        <input type="checkbox" id="theme-checkbox">
+                        <div class="slider round"></div>
+                    </label>
+                    <span id="theme-text">Mode sombre</span>
+                </div>
+                <button id="logoutBtn" class="icon-button" aria-label="Déconnexion">
+                    <span class="icon">🔓</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <section class="timer-section">
+            <div id="timer" class="timer-display" aria-live="polite">00:00:00.00</div>
+            <div class="control-buttons">
+                <button id="startBtn" class="control-button start">
+                    <span class="icon">▶️</span> Start
+                </button>
+                <button id="pauseBtn" class="control-button pause">
+                    <span class="icon">⏸️</span> Pause
+                </button>
+                <button id="resetBtn" class="control-button reset">
+                    <span class="icon">⏹️</span> Reset
+                </button>
+                <button id="lapBtn" class="control-button lap">
+                    <span class="icon">⏱️</span> Tour
+                </button>
             </div>
             
-            <form id="login-form" class="auth-form">
-                <div class="form-group">
-                    <label for="matricule">Matricule</label>
-                    <input type="text" id="matricule" placeholder="Votre numéro de matricule" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">Mot de passe</label>
-                    <input type="password" id="password" placeholder="Votre mot de passe" required>
-                    <button type="button" class="toggle-password" aria-label="Afficher le mot de passe">👁️</button>
-                </div>
-                
-                <button type="submit" class="btn-primary">
-                    <span class="spinner hidden"></span>
-                    <span class="btn-text">Se connecter</span>
+            <div class="employee-actions">
+                <select id="employeeSelect" class="form-input">
+                    <option value="">Sélectionner un employé</option>
+                    <!-- Rempli dynamiquement via API -->
+                </select>
+                <button id="assignBtn" class="action-button">
+                    Assigner le temps
                 </button>
-                
-                <div class="form-footer">
-                    <a href="#" id="forgot-password">Mot de passe oublié ?</a>
-                </div>
-            </form>
-        </div>
-        
-        <div class="app-info">
-            <p>Version 1.0.0</p>
-            <p>© 2023 K-OIL Tous droits réservés</p>
-        </div>
-    </div>
+            </div>
+        </section>
 
-    <!-- Page principale (chargée dynamiquement) -->
-    <div id="app-container"></div>
+        <section class="history-section">
+            <h2>Historique des pointages</h2>
+            <div id="laps" class="laps-container" aria-live="polite">
+                <!-- Rempli dynamiquement -->
+            </div>
+        </section>
+    </main>
 
-    <script src="/js/auth.js"></script>
-    <script src="/js/app.js"></script>
+    <!-- Templates pour les éléments dynamiques -->
+    <template id="lapTemplate">
+        <div class="lap-item">
+            <span class="lap-time"></span>
+            <span class="lap-employee"></span>
+            <button class="lap-delete" aria-label="Supprimer">🗑️</button>
+        </div>
+    </template>
+
+    <!-- Scripts -->
+    <script>
+        // Configuration globale
+        window.appConfig = {
+            apiBaseUrl: '/api',
+            authToken: localStorage.getItem('authToken') || null,
+            currentUser: JSON.parse(localStorage.getItem('currentUser')) || null
+        };
+    </script>
+    <script defer src="/js/script.js"></script>
+    
+    <!-- Initialisation -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Vérification d'authentification
+            if (!window.appConfig.authToken) {
+                window.location.href = '/login.html';
+            }
+            
+            // Initialisation PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.error('SW registration failed:', err));
+            }
+        });
+    </script>
 </body>
 </html>
